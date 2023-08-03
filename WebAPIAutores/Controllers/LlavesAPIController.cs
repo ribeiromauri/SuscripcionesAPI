@@ -47,7 +47,21 @@ namespace WebAPIAutores.Controllers
         [HttpPut]
         public async Task<ActionResult> ActualizarLlave(ActualizarLlaveDTO actualizarLlaveDTO)
         {
+            var usuarioId = ObtenerUsuarioId();
 
+            var llaveDb = await context.LlavesAPI.FirstOrDefaultAsync(x => x.UsuarioId == usuarioId);
+
+            if (llaveDb == null) return NotFound();
+
+            if (usuarioId != llaveDb.UsuarioId) return Forbid();
+
+            if (actualizarLlaveDTO.ActualizarLlave) llaveDb.Llave = servicioLlaves.GenerarLlave();
+
+            llaveDb.Activa = actualizarLlaveDTO.Activa;
+
+            await context.SaveChangesAsync();
+
+            return NoContent();
         }
 
     }

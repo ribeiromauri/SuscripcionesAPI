@@ -106,6 +106,8 @@ namespace WebAPIAutores
                 });
             });
 
+
+
             services.AddScoped<ServicioLlaves>();
         }
 
@@ -128,6 +130,8 @@ namespace WebAPIAutores
             app.UseRouting();
 
             app.UseCors();
+
+            app.UseLimitarPeticiones();
 
             app.UseAuthorization();
 
