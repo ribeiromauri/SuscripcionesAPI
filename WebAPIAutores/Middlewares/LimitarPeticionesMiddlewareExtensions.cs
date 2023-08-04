@@ -27,7 +27,16 @@ namespace WebAPIAutores.Middlewares
         public async Task InvokeAsync(HttpContext httpContext, ApplicationDbContext context)
         {
             var limitarPeticionesConfiguracion = new LimitarPeticionesConfiguracion();
-            configuration.GetRequiredSection("limitarPeticiones").Bind(limitarPeticionesConfiguracion);            
+            configuration.GetRequiredSection("limitarPeticiones").Bind(limitarPeticionesConfiguracion);
+
+            var ruta = httpContext.Request.Path.ToString();
+            var estaLaRutaEnListaBlanca = limitarPeticionesConfiguracion.ListaBlancaRutas.Any(x => ruta.Contains(x));
+
+            if (estaLaRutaEnListaBlanca)
+            {
+                await siguiente(httpContext);
+                return;
+            }
 
             var llaveStringValues = httpContext.Request.Headers["X-Api-Key"];
 
@@ -56,22 +65,23 @@ namespace WebAPIAutores.Middlewares
                 return;
             }
 
-            //if (llaveDB.TipoLlave == TipoLlave.Gratis)
-            //{
-            //    var hoy = DateTime.Today;
-            //    var mañana = hoy.AddDays(1);
-            //    var cantidadPeticionesRealizadasHoy = await context.Peticiones.CountAsync(x =>
-            //    x.LlaveId == llaveDB.Id && x.FechaPeticion >= hoy && x.FechaPeticion < mañana);
+            if (llaveDB.TipoLlave == TipoLlave.Gratis)
+            {
+                var hoy = DateTime.Today;
+                var mañana = hoy.AddDays(1);
+                var cantidadPeticionesRealizadasHoy = await context.Peticiones.CountAsync(x => x.LlaveId == llaveDB.Id && x.FechaPeticion >= hoy && x.FechaPeticion < mañana);
 
-            //    if (cantidadPeticionesRealizadasHoy >= limitarPeticionesConfiguracion.PeticionesPorDiaGratuito)
-            //    {
-            //        httpContext.Response.StatusCode = 429; // Too many requests
-            //        await httpContext.Response.WriteAsync("Ha excedido el límite de peticiones por día. Si desea " +
-            //            "realizar más peticiones, " +
-            //            "actualice su suscripción a una cuenta profesional");
-            //        return;
-            //    }
-            //}
+                if (cantidadPeticionesRealizadasHoy >= limitarPeticionesConfiguracion.PeticionesPorDiaGratuito)
+                {
+                    httpContext.Response.StatusCode = 429; // Too many requests
+                    await httpContext.Response.WriteAsync("Ha excedido el límite de peticiones por día. Si desea realizar más peticiones, actualice su suscripción a una cuenta profesional");
+                    return;
+                }
+            }
+
+            var peticion = new Peticion() { LlaveId = llaveDB.Id, FechaPeticion = DateTime.UtcNow };
+            context.Add(peticion);
+            await context.SaveChangesAsync();
 
             await siguiente(httpContext);
         }
