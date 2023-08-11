@@ -25,7 +25,7 @@ namespace WebAPIAutores.Controllers
         public async Task<ActionResult<List<LlaveDTO>>> MisLLaves()
         {
             var usuarioId = ObtenerUsuarioId();
-            var llavesUsuario = await context.LlavesAPI.Include(x => x.RestriccionesDominio).Where(x => x.UsuarioId== usuarioId).ToListAsync();
+            var llavesUsuario = await context.LlavesAPI.Include(x => x.RestriccionesDominio).Include(x => x.RestriccionesIP).Where(x => x.UsuarioId== usuarioId).ToListAsync();
             return mapper.Map<List<LlaveDTO>>(llavesUsuario);
         }
 
