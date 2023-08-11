@@ -81,6 +81,13 @@ namespace WebAPIAutores.Middlewares
                     return;
                 }
             }
+            else if (llaveDB.Usuario.Deudor)
+            {
+                httpContext.Response.StatusCode = 400;
+                await httpContext.Response.WriteAsync("El usuario es deudor de alguna factura");
+                return;
+
+            }
 
             var superaRestricciones = PeticionSuperaAlgunaDeLasRestricciones(llaveDB, httpContext);
 
